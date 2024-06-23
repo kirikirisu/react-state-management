@@ -7,121 +7,123 @@ import {
   useCallback,
   useContext,
   useState,
-  memo,
 } from "react";
 import "./App.css";
 
-// Context を二つに分ける
-const countContext = createContext<number>(0);
-const setCountContext = createContext<Dispatch<SetStateAction<number>>>(
+type User = {
+  id: number;
+  isAdmin: boolean;
+  name: string;
+  email: string;
+};
+
+const initUser: User = {
+  id: 1,
+  isAdmin: true,
+  name: "anonymous",
+  email: "anonymous@anonymous.com",
+};
+
+const userContext = createContext<User>(initUser);
+const setUserContext = createContext<Dispatch<SetStateAction<User>>>(
   () => undefined
 );
 
-const CountProvider = ({ children }: { children: ReactElement }) => {
-  const [count, setCount] = useState<number>(0);
+const UserProvider = ({ children }: { children: ReactElement }) => {
+  const [user, setUser] = useState<User>(initUser);
 
   return (
-    <countContext.Provider value={count}>
-      <setCountContext.Provider value={setCount}>
+    <userContext.Provider value={user}>
+      <setUserContext.Provider value={setUser}>
         {children}
-      </setCountContext.Provider>
-    </countContext.Provider>
+      </setUserContext.Provider>
+    </userContext.Provider>
   );
 };
 
-const useCountValue = () => useContext(countContext);
-const useCountSetValue = () => useContext(setCountContext);
+const useUserValue = () => useContext(userContext);
+const useUserSetValue = () => useContext(setUserContext);
+
+function getRandomName() {
+  const names = [
+    "John",
+    "Jane",
+    "Alice",
+    "Bob",
+    "Charlie",
+    "Dave",
+    "Eve",
+    "Frank",
+    "Grace",
+    "Hank",
+  ];
+  const randomIndex = Math.floor(Math.random() * names.length);
+
+  return names[randomIndex];
+}
 
 const Button = () => {
   console.log("render ボタン");
 
-  const setCount = useCountSetValue();
+  const setUser = useUserSetValue();
 
-  const increment = useCallback(() => {
-    setCount((prev) => prev + 1);
-  }, [setCount]);
+  const renameUser = useCallback(() => {
+    setUser((prev) => {
+      return { ...prev, name: getRandomName() };
+    });
+  }, [setUser]);
 
   return (
     <div>
-      <button onClick={increment}>+1</button>
+      <button onClick={renameUser}>+1</button>
     </div>
   );
 };
 
-const DisplayCountDepthOne = memo(() => {
-  console.log("render display count depth 1");
-  return <></>;
-});
+const DisplayUserName = () => {
+  console.log("render user name");
 
-const DisplayCount = () => {
-  console.log("render カウント");
-
-  const count = useCountValue();
+  const { name } = useUserValue();
 
   return (
     <div>
-      <p>カウント: {count}</p>
-      <DisplayCountDepthOne />
+      <p>ユーザー名: {name}</p>
+      {/* <DisplayCountDepthOne /> */}
     </div>
   );
 };
 
-const BindContextValueMiddleTopComponent = () => {
-  console.log(
-    "useContextしているコンポーネントを子コンポーネントに持つコンポーネント: BindContextValueMiddleTopComponent"
-  );
+const DisplayUserEmail = () => {
+  console.log("render user email");
 
-  return (
-    <>
-      <div>BindContextValueMiddleTopComponent</div>
-      <BindContextValueMiddleComponent />
-    </>
-  );
-};
-
-const BindContextValueMiddleComponent = () => {
-  console.log(
-    "useContextのバインドを持たない親コンポーネントを持つコンポーネント: BindContextValueMiddleComponent"
-  );
-  const count = useCountValue();
+  const { email } = useUserValue();
 
   return (
     <div>
-      <p>Count: {count}</p>
-      <BindContextValueMiddleChildComponent />
+      <p>ユーザーのメールアドレス: {email}</p>
     </div>
   );
 };
 
-const BindContextValueMiddleChildComponent = memo(() => {
-  console.log(
-    "useContextのバインドをしている親コンポーネントを持つコンポーネント: BindContextValueMiddleChildComponent"
-  );
-
-  return <p>BindContextValueMiddleChildComponent</p>;
-});
-
-/* この場合、コンテキストの中間にあるコンポーネントは再レンダリングされない。
-   useContextでstateをsubscribeしているコンポーネント配下のコンポーネントは全て再レンダリングされる
-   つまり、useContextはできるだけリーフにあるコンポーネントで使うべき
-   stateにオブジェクト使う場合、正規化は「 2 つの state 変数が常に一緒に変更される場合は、それらを単一の state 変数にまとめる」
-   https://ja.react.dev/learn/choosing-the-state-structure#group-related-state
+/*
+  DisplayUserNameではユーザー名しか参照していない、DisplayUserEmailではユーザーのemailしか参照していない
+  しかし、ユーザー名を更新すると同一オブジェクトのためDisplayUserEmailも再レンダリングされる
  */
 const App = () => {
   return (
     <div className="App">
-      <DisplayCount />
       <Button />
-      <BindContextValueMiddleTopComponent />
+      <DisplayUserName />
+      <DisplayUserEmail />
     </div>
   );
 };
 
 const Root = () => {
   return (
-    <CountProvider>
+    <UserProvider>
       <App />
-    </CountProvider>
+    </UserProvider>
   );
 };
 
