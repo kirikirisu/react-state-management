@@ -1,13 +1,6 @@
-// ref https://zenn.dev/yuta_ura/articles/react-context-api
-import {
-  createContext,
-  Dispatch,
-  ReactElement,
-  SetStateAction,
-  useCallback,
-  useContext,
-  useState,
-} from "react";
+// ref: https://next-blog.croud.jp/contents/5cd634fa-497c-4867-ae64-dc8fd156fbe1
+import { useCallback } from "react";
+import { StoreProvider, useDispatch, useSelector } from "./store";
 import "./App.css";
 
 type User = {
@@ -23,26 +16,6 @@ const initUser: User = {
   name: "anonymous",
   email: "anonymous@anonymous.com",
 };
-
-const userContext = createContext<User>(initUser);
-const setUserContext = createContext<Dispatch<SetStateAction<User>>>(
-  () => undefined
-);
-
-const UserProvider = ({ children }: { children: ReactElement }) => {
-  const [user, setUser] = useState<User>(initUser);
-
-  return (
-    <userContext.Provider value={user}>
-      <setUserContext.Provider value={setUser}>
-        {children}
-      </setUserContext.Provider>
-    </userContext.Provider>
-  );
-};
-
-const useUserValue = () => useContext(userContext);
-const useUserSetValue = () => useContext(setUserContext);
 
 function getRandomName() {
   const names = [
@@ -65,25 +38,24 @@ function getRandomName() {
 const Button = () => {
   console.log("render ボタン");
 
-  const setUser = useUserSetValue();
+  const dispatch = useDispatch<User>();
 
   const renameUser = useCallback(() => {
-    setUser((prev) => {
+    dispatch((prev) => {
       return { ...prev, name: getRandomName() };
     });
-  }, [setUser]);
+  }, [dispatch]);
 
   return (
     <div>
-      <button onClick={renameUser}>+1</button>
+      <button onClick={renameUser}>Rename</button>
     </div>
   );
 };
 
 const DisplayUserName = () => {
   console.log("render user name");
-
-  const { name } = useUserValue();
+  const name = useSelector((state: User) => state.name);
 
   return (
     <div>
@@ -96,7 +68,7 @@ const DisplayUserName = () => {
 const DisplayUserEmail = () => {
   console.log("render user email");
 
-  const { email } = useUserValue();
+  const email = useSelector((state: User) => state.email);
 
   return (
     <div>
@@ -106,9 +78,9 @@ const DisplayUserEmail = () => {
 };
 
 /*
-  DisplayUserNameではユーザー名しか参照していない、DisplayUserEmailではユーザーのemailしか参照していない
-  しかし、ユーザー名を更新すると同一オブジェクトのためDisplayUserEmailも再レンダリングされる
- */
+  DisplayUserName, DisplayUserEmailは同じオブジェクトを参照するが、
+  参照しているプロパティが更新された時のみ再レンダリングする
+*/
 const App = () => {
   return (
     <div className="App">
@@ -121,9 +93,9 @@ const App = () => {
 
 const Root = () => {
   return (
-    <UserProvider>
+    <StoreProvider initState={() => initUser}>
       <App />
-    </UserProvider>
+    </StoreProvider>
   );
 };
 
