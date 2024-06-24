@@ -1,7 +1,7 @@
 # Context + useReducer
 - ステートマシンが欲しい時に使える、contextはstateとdispacherの配布、reducerは状態管理の責務
 - 基本的にはこの組み合わせで状態管理ができる。[公式でもこの方法が紹介されている。](https://ja.react.dev/learn/scaling-up-with-reducer-and-context)
-- reduxのコアメンテナもライブラリを使用したくない場合は[この方法をお薦めしている。](https://blog.isquaredsoftware.com/2021/01/context-redux-differences/#recommendations)
+- reduxのコアメンテナもライブラリを使用したくない場合はこの方法を[お薦めしている。](https://blog.isquaredsoftware.com/2021/01/context-redux-differences/#recommendations)
 
 # Context + useReducerはパフォーマンス上の問題がある
 useContextをしているコンポーネント配下のコンポーネントは値に変更があったときに全て再レンダリングされる。React.memoで一定解決できる。React19のReact Compilerで最適化される可能性も高い。
